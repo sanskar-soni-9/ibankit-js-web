@@ -526,7 +526,7 @@ const by3code = Object.entries(countryData).reduce(
   {} as Record<string, [CountryCode, [string, string]]>,
 );
 
-export function countryByCode(code: string): CountryCode | null {
+export function countryByCode(code: string, country: undefined | boolean): CountryCode | null | string {
   if (code === null) {
     return null;
   }
@@ -538,7 +538,7 @@ export function countryByCode(code: string): CountryCode | null {
     info = by2code[code];
   }
   if (info) {
-    return info[0];
+    return country ? info[1][0] : info[0];
   }
 
   return null;

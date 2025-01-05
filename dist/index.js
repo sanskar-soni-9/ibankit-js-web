@@ -5,16 +5,14 @@ var IBANKIT = (() => {
   var __getOwnPropNames = Object.getOwnPropertyNames;
   var __hasOwnProp = Object.prototype.hasOwnProperty;
   var __export = (target, all) => {
-    for (var name in all) __defProp(target, name, { get: all[name], enumerable: true });
+    for (var name in all)
+      __defProp(target, name, { get: all[name], enumerable: true });
   };
   var __copyProps = (to, from, except, desc) => {
-    if ((from && typeof from === "object") || typeof from === "function") {
+    if (from && typeof from === "object" || typeof from === "function") {
       for (let key of __getOwnPropNames(from))
         if (!__hasOwnProp.call(to, key) && key !== except)
-          __defProp(to, key, {
-            get: () => from[key],
-            enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable,
-          });
+          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
     }
     return to;
   };
@@ -28,6 +26,7 @@ var IBANKIT = (() => {
     CountryCode: () => CountryCode,
     IBAN: () => IBAN,
     IBANBuilder: () => IBANBuilder,
+    countryByCode: () => countryByCode
   });
 
   // src/country.ts
@@ -534,17 +533,23 @@ var IBANKIT = (() => {
     ["YT" /* YT */]: ["Mayotte", "MYT"],
     ["ZA" /* ZA */]: ["South Africa", "ZAF"],
     ["ZM" /* ZM */]: ["Zambia", "ZMB"],
-    ["ZW" /* ZW */]: ["Zimbabwe", "ZWE"],
+    ["ZW" /* ZW */]: ["Zimbabwe", "ZWE"]
   };
-  var by2code = Object.entries(countryData).reduce((acc, [k, v]) => {
-    acc[k] = [k, v];
-    return acc;
-  }, {});
-  var by3code = Object.entries(countryData).reduce((acc, [k, v]) => {
-    acc[v[1]] = [k, v];
-    return acc;
-  }, {});
-  function countryByCode(code) {
+  var by2code = Object.entries(countryData).reduce(
+    (acc, [k, v]) => {
+      acc[k] = [k, v];
+      return acc;
+    },
+    {}
+  );
+  var by3code = Object.entries(countryData).reduce(
+    (acc, [k, v]) => {
+      acc[v[1]] = [k, v];
+      return acc;
+    },
+    {}
+  );
+  function countryByCode(code, country) {
     if (code === null) {
       return null;
     }
@@ -555,7 +560,7 @@ var IBANKIT = (() => {
       info = by2code[code];
     }
     if (info) {
-      return info[0];
+      return country ? info[1][0] : info[0];
     }
     return null;
   }
@@ -570,13 +575,13 @@ var IBANKIT = (() => {
     [0 /* n */]: "0123456789",
     [1 /* a */]: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
     [2 /* c */]: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-    [3 /* e */]: " ",
+    [3 /* e */]: " "
   };
   var charByCharacterRE = {
     [0 /* n */]: /^[0-9]+$/,
     [1 /* a */]: /^[A-Z]+$/,
     [2 /* c */]: /^[0-9A-Za-z]+$/,
-    [3 /* e */]: /^ +$/,
+    [3 /* e */]: /^ +$/
   };
   var BbanStructurePart = class _BbanStructurePart {
     constructor(entryType, characterType, length, trailingSeparator, generate) {
@@ -677,10 +682,7 @@ var IBANKIT = (() => {
 
   // src/bbanStructure.ts
   function mod11(value, weights) {
-    return (
-      (11 - (value.split("").reduce((acc, s, idx) => acc + parseInt(s, 10) * weights[idx % weights.length], 0) % 11)) %
-      11
-    );
+    return (11 - value.split("").reduce((acc, s, idx) => acc + parseInt(s, 10) * weights[idx % weights.length], 0) % 11) % 11;
   }
   function nationalES(bban, structure) {
     const weights = [1, 2, 4, 8, 5, 10, 9, 7, 3, 6];
@@ -707,13 +709,10 @@ var IBANKIT = (() => {
       ["[FOW]"]: "6",
       ["[GPX]"]: "7",
       ["[HQY]"]: "8",
-      ["[IRZ]"]: "9",
+      ["[IRZ]"]: "9"
     };
-    let combined =
-      [0 /* BANK_CODE */, 1 /* BRANCH_CODE */, 2 /* ACCOUNT_NUMBER */]
-        .map((p) => String(structure.extractValue(bban, p)))
-        .join("") + "00";
-    Object.entries(replaceChars).map(([k, v]) => (combined = combined.replace(new RegExp(k, "g"), v)));
+    let combined = [0 /* BANK_CODE */, 1 /* BRANCH_CODE */, 2 /* ACCOUNT_NUMBER */].map((p) => String(structure.extractValue(bban, p))).join("") + "00";
+    Object.entries(replaceChars).map(([k, v]) => combined = combined.replace(new RegExp(k, "g"), v));
     const expected = 97 - combined.split("").reduce((acc, v) => (acc * 10 + parseInt(v)) % 97, 0);
     return String(expected).padStart(2, "0");
   }
@@ -723,14 +722,7 @@ var IBANKIT = (() => {
     const V0 = "0".charCodeAt(0);
     const V9 = "9".charCodeAt(0);
     const VA = "A".charCodeAt(0);
-    const value =
-      [0 /* BANK_CODE */, 1 /* BRANCH_CODE */, 2 /* ACCOUNT_NUMBER */]
-        .map((p) => structure.extractValueMust(bban, p))
-        .join("")
-        .split("")
-        .map((v) => v.toUpperCase().charCodeAt(0))
-        .map((v) => v - (V0 <= v && v <= V9 ? V0 : VA))
-        .reduce((acc, v, idx) => acc + (idx % 2 === 0 ? odd[v] : even[v]), 0) % 26;
+    const value = [0 /* BANK_CODE */, 1 /* BRANCH_CODE */, 2 /* ACCOUNT_NUMBER */].map((p) => structure.extractValueMust(bban, p)).join("").split("").map((v) => v.toUpperCase().charCodeAt(0)).map((v) => v - (V0 <= v && v <= V9 ? V0 : VA)).reduce((acc, v, idx) => acc + (idx % 2 === 0 ? odd[v] : even[v]), 0) % 26;
     return String.fromCharCode(VA + value);
   }
   function nationalNO(bban, structure) {
@@ -740,12 +732,7 @@ var IBANKIT = (() => {
   function nationalPT(bban, structure) {
     const V0 = "0".charCodeAt(0);
     const weights = [73, 17, 89, 38, 62, 45, 53, 15, 50, 5, 49, 34, 81, 76, 27, 90, 9, 30, 3];
-    const remainder = [0 /* BANK_CODE */, 1 /* BRANCH_CODE */, 2 /* ACCOUNT_NUMBER */]
-      .map((p) => structure.extractValueMust(bban, p))
-      .join("")
-      .split("")
-      .map((v) => v.charCodeAt(0))
-      .reduce((acc, v, idx) => (acc + (v - V0) * weights[idx]) % 97, 0);
+    const remainder = [0 /* BANK_CODE */, 1 /* BRANCH_CODE */, 2 /* ACCOUNT_NUMBER */].map((p) => structure.extractValueMust(bban, p)).join("").split("").map((v) => v.charCodeAt(0)).reduce((acc, v, idx) => (acc + (v - V0) * weights[idx]) % 97, 0);
     return String(98 - remainder).padStart(2, "0");
   }
   var BbanStructure = class _BbanStructure {
@@ -754,7 +741,7 @@ var IBANKIT = (() => {
         BbanStructurePart.bankCode(5, 0 /* n */),
         BbanStructurePart.branchCode(5, 0 /* n */),
         BbanStructurePart.accountNumber(11, 2 /* c */),
-        BbanStructurePart.nationalCheckDigit(2, 0 /* n */, nationalFR),
+        BbanStructurePart.nationalCheckDigit(2, 0 /* n */, nationalFR)
       );
     }
     static {
@@ -763,34 +750,34 @@ var IBANKIT = (() => {
           // AD2!n4!n4!n12!c
           BbanStructurePart.bankCode(4, 0 /* n */),
           BbanStructurePart.branchCode(4, 0 /* n */),
-          BbanStructurePart.accountNumber(12, 2 /* c */),
+          BbanStructurePart.accountNumber(12, 2 /* c */)
         ),
         ["AE" /* AE */]: new _BbanStructure(
           // AE2!n3!n16!n
           BbanStructurePart.bankCode(3, 0 /* n */),
-          BbanStructurePart.accountNumber(16, 2 /* c */),
+          BbanStructurePart.accountNumber(16, 2 /* c */)
         ),
         ["AL" /* AL */]: new _BbanStructure(
           BbanStructurePart.bankCode(3, 0 /* n */),
           BbanStructurePart.branchCode(4, 0 /* n */),
           BbanStructurePart.nationalCheckDigit(1, 0 /* n */),
-          BbanStructurePart.accountNumber(16, 2 /* c */),
+          BbanStructurePart.accountNumber(16, 2 /* c */)
         ),
         // Provisional
         ["AO" /* AO */]: new _BbanStructure(BbanStructurePart.accountNumber(21, 0 /* n */)),
         ["AT" /* AT */]: new _BbanStructure(
           BbanStructurePart.bankCode(5, 0 /* n */),
-          BbanStructurePart.accountNumber(11, 0 /* n */),
+          BbanStructurePart.accountNumber(11, 0 /* n */)
         ),
         ["AZ" /* AZ */]: new _BbanStructure(
           BbanStructurePart.bankCode(4, 1 /* a */),
-          BbanStructurePart.accountNumber(20, 2 /* c */),
+          BbanStructurePart.accountNumber(20, 2 /* c */)
         ),
         ["BA" /* BA */]: new _BbanStructure(
           BbanStructurePart.bankCode(3, 0 /* n */),
           BbanStructurePart.branchCode(3, 0 /* n */),
           BbanStructurePart.accountNumber(8, 0 /* n */),
-          BbanStructurePart.nationalCheckDigit(2, 0 /* n */),
+          BbanStructurePart.nationalCheckDigit(2, 0 /* n */)
         ),
         ["BE" /* BE */]: new _BbanStructure(
           BbanStructurePart.bankCode(3, 0 /* n */),
@@ -808,7 +795,7 @@ var IBANKIT = (() => {
               expected = 97;
             }
             return String(expected).padStart(2, "0");
-          }),
+          })
         ),
         // Provisional
         ["BF" /* BF */]: new _BbanStructure(BbanStructurePart.accountNumber(23, 0 /* n */)),
@@ -816,11 +803,11 @@ var IBANKIT = (() => {
           BbanStructurePart.bankCode(4, 1 /* a */),
           BbanStructurePart.branchCode(4, 0 /* n */),
           BbanStructurePart.accountType(2, 0 /* n */),
-          BbanStructurePart.accountNumber(8, 2 /* c */),
+          BbanStructurePart.accountNumber(8, 2 /* c */)
         ),
         ["BH" /* BH */]: new _BbanStructure(
           BbanStructurePart.bankCode(4, 1 /* a */),
-          BbanStructurePart.accountNumber(14, 2 /* c */),
+          BbanStructurePart.accountNumber(14, 2 /* c */)
         ),
         // Provisional
         ["BI" /* BI */]: new _BbanStructure(
@@ -829,7 +816,7 @@ var IBANKIT = (() => {
           BbanStructurePart.bankCode(5, 0 /* n */),
           BbanStructurePart.branchCode(5, 0 /* n */),
           BbanStructurePart.accountNumber(11, 0 /* n */),
-          BbanStructurePart.nationalCheckDigit(2, 0 /* n */),
+          BbanStructurePart.nationalCheckDigit(2, 0 /* n */)
           // BbanStructurePart.accountNumber(12, CharacterType.n),
         ),
         // Provisional
@@ -837,14 +824,14 @@ var IBANKIT = (() => {
           BbanStructurePart.bankCode(5, 2 /* c */),
           BbanStructurePart.branchCode(5, 0 /* n */),
           BbanStructurePart.accountNumber(12, 0 /* n */),
-          BbanStructurePart.nationalCheckDigit(2, 0 /* n */, nationalFR),
+          BbanStructurePart.nationalCheckDigit(2, 0 /* n */, nationalFR)
         ),
         ["BR" /* BR */]: new _BbanStructure(
           BbanStructurePart.bankCode(8, 0 /* n */),
           BbanStructurePart.branchCode(5, 0 /* n */),
           BbanStructurePart.accountNumber(10, 0 /* n */),
           BbanStructurePart.accountType(1, 1 /* a */),
-          BbanStructurePart.ownerAccountNumber(1, 2 /* c */),
+          BbanStructurePart.ownerAccountNumber(1, 2 /* c */)
         ),
         // https://www.nbrb.by/payment/ibanbic/ais-pbi_v2-7.pdf
         // 4c - symbolic code of the bank from the BIC directory (SI029);
@@ -857,39 +844,39 @@ var IBANKIT = (() => {
         ["BY" /* BY */]: new _BbanStructure(
           BbanStructurePart.bankCode(4, 2 /* c */),
           BbanStructurePart.accountType(4, 0 /* n */),
-          BbanStructurePart.accountNumber(16, 2 /* c */),
+          BbanStructurePart.accountNumber(16, 2 /* c */)
         ),
         // Provisional
         ["CF" /* CF */]: new _BbanStructure(
-          BbanStructurePart.accountNumber(23, 0 /* n */),
+          BbanStructurePart.accountNumber(23, 0 /* n */)
           // @TODO is this france?
         ),
         // Provisional
         ["CG" /* CG */]: new _BbanStructure(
-          BbanStructurePart.accountNumber(23, 0 /* n */),
+          BbanStructurePart.accountNumber(23, 0 /* n */)
           // @TODO is this france?
         ),
         ["CH" /* CH */]: new _BbanStructure(
           BbanStructurePart.bankCode(5, 0 /* n */),
-          BbanStructurePart.accountNumber(12, 2 /* c */),
+          BbanStructurePart.accountNumber(12, 2 /* c */)
         ),
         // Provisional
         ["CI" /* CI */]: new _BbanStructure(
           BbanStructurePart.bankCode(2, 2 /* c */),
-          BbanStructurePart.accountNumber(22, 0 /* n */),
+          BbanStructurePart.accountNumber(22, 0 /* n */)
         ),
         // Provisional
         ["CM" /* CM */]: new _BbanStructure(BbanStructurePart.accountNumber(23, 0 /* n */)),
         ["CR" /* CR */]: new _BbanStructure(
           BbanStructurePart.bankCode(4, 0 /* n */),
-          BbanStructurePart.accountNumber(14, 0 /* n */),
+          BbanStructurePart.accountNumber(14, 0 /* n */)
         ),
         // Provisional
         ["CV" /* CV */]: new _BbanStructure(BbanStructurePart.accountNumber(21, 0 /* n */)),
         ["CY" /* CY */]: new _BbanStructure(
           BbanStructurePart.bankCode(3, 0 /* n */),
           BbanStructurePart.branchCode(5, 0 /* n */),
-          BbanStructurePart.accountNumber(16, 2 /* c */),
+          BbanStructurePart.accountNumber(16, 2 /* c */)
         ),
         // Registry defines this as 4!n6!n10!n -- but does not discuss branch information
         // This is improved with info from
@@ -897,11 +884,11 @@ var IBANKIT = (() => {
         ["CZ" /* CZ */]: new _BbanStructure(
           BbanStructurePart.bankCode(4, 0 /* n */),
           BbanStructurePart.branchCode(6, 0 /* n */),
-          BbanStructurePart.accountNumber(10, 0 /* n */),
+          BbanStructurePart.accountNumber(10, 0 /* n */)
         ),
         ["DE" /* DE */]: new _BbanStructure(
           BbanStructurePart.bankCode(8, 0 /* n */),
-          BbanStructurePart.accountNumber(10, 0 /* n */),
+          BbanStructurePart.accountNumber(10, 0 /* n */)
         ),
         // Provisional
         ["DJ" /* DJ */]: new _BbanStructure(
@@ -910,7 +897,7 @@ var IBANKIT = (() => {
           BbanStructurePart.bankCode(5, 0 /* n */),
           BbanStructurePart.branchCode(5, 0 /* n */),
           BbanStructurePart.accountNumber(11, 0 /* n */),
-          BbanStructurePart.nationalCheckDigit(2, 0 /* n */),
+          BbanStructurePart.nationalCheckDigit(2, 0 /* n */)
         ),
         // Registry defines 4!n9!n1!n -- however no information on
         // nationalCheckDigit exist and all documentation discusses
@@ -920,11 +907,11 @@ var IBANKIT = (() => {
         //    https://www.finanssiala.fi/maksujenvalitys/dokumentit/IBAN_in_payments.pdf
         ["DK" /* DK */]: new _BbanStructure(
           BbanStructurePart.bankCode(4, 0 /* n */),
-          BbanStructurePart.accountNumber(10, 0 /* n */),
+          BbanStructurePart.accountNumber(10, 0 /* n */)
         ),
         ["DO" /* DO */]: new _BbanStructure(
           BbanStructurePart.bankCode(4, 2 /* c */),
-          BbanStructurePart.accountNumber(20, 0 /* n */),
+          BbanStructurePart.accountNumber(20, 0 /* n */)
         ),
         // Provisional
         ["DZ" /* DZ */]: new _BbanStructure(BbanStructurePart.accountNumber(20, 0 /* n */)),
@@ -932,35 +919,35 @@ var IBANKIT = (() => {
           BbanStructurePart.bankCode(2, 0 /* n */),
           BbanStructurePart.branchCode(2, 0 /* n */),
           BbanStructurePart.accountNumber(11, 0 /* n */),
-          BbanStructurePart.nationalCheckDigit(1, 0 /* n */),
+          BbanStructurePart.nationalCheckDigit(1, 0 /* n */)
         ),
         ["EG" /* EG */]: new _BbanStructure(
           BbanStructurePart.bankCode(4, 0 /* n */),
           BbanStructurePart.branchCode(4, 0 /* n */),
-          BbanStructurePart.accountNumber(17, 0 /* n */),
+          BbanStructurePart.accountNumber(17, 0 /* n */)
         ),
         // Spain is 4!n4!n1!n1!n10!n -- but the check digit is 2 digits?
         ["ES" /* ES */]: new _BbanStructure(
           BbanStructurePart.bankCode(4, 0 /* n */),
           BbanStructurePart.branchCode(4, 0 /* n */),
           BbanStructurePart.nationalCheckDigit(2, 0 /* n */, nationalES),
-          BbanStructurePart.accountNumber(10, 0 /* n */),
+          BbanStructurePart.accountNumber(10, 0 /* n */)
         ),
         // Additional details:
         //  https://www.finanssiala.fi/maksujenvalitys/dokumentit/IBAN_in_payments.pdf
         ["FI" /* FI */]: new _BbanStructure(
           BbanStructurePart.bankCode(3, 0 /* n */),
-          BbanStructurePart.accountNumber(11, 0 /* n */),
+          BbanStructurePart.accountNumber(11, 0 /* n */)
         ),
         ["FK" /* FK */]: new _BbanStructure(
           // Added July 23
           BbanStructurePart.bankCode(2, 1 /* a */),
-          BbanStructurePart.accountNumber(12, 0 /* n */),
+          BbanStructurePart.accountNumber(12, 0 /* n */)
         ),
         ["FO" /* FO */]: new _BbanStructure(
           BbanStructurePart.bankCode(4, 0 /* n */),
           BbanStructurePart.accountNumber(9, 0 /* n */),
-          BbanStructurePart.nationalCheckDigit(1, 0 /* n */),
+          BbanStructurePart.nationalCheckDigit(1, 0 /* n */)
         ),
         // FR IBAN covers:
         //  GF, GP, MQ, RE, PF, TF, YT, NC, BL, MF, PM, WF
@@ -972,43 +959,43 @@ var IBANKIT = (() => {
         ["GB" /* GB */]: new _BbanStructure(
           BbanStructurePart.bankCode(4, 1 /* a */),
           BbanStructurePart.branchCode(6, 0 /* n */),
-          BbanStructurePart.accountNumber(8, 0 /* n */),
+          BbanStructurePart.accountNumber(8, 0 /* n */)
         ),
         ["GE" /* GE */]: new _BbanStructure(
           // Added Apr 23
           BbanStructurePart.bankCode(2, 1 /* a */),
-          BbanStructurePart.accountNumber(16, 0 /* n */),
+          BbanStructurePart.accountNumber(16, 0 /* n */)
         ),
         ["GI" /* GI */]: new _BbanStructure(
           BbanStructurePart.bankCode(4, 1 /* a */),
-          BbanStructurePart.accountNumber(15, 2 /* c */),
+          BbanStructurePart.accountNumber(15, 2 /* c */)
         ),
         // Same as DK (same issues)
         ["GL" /* GL */]: new _BbanStructure(
           BbanStructurePart.bankCode(4, 0 /* n */),
-          BbanStructurePart.accountNumber(10, 0 /* n */),
+          BbanStructurePart.accountNumber(10, 0 /* n */)
         ),
         // Provisional
         ["GQ" /* GQ */]: _BbanStructure.bbanFR,
         ["GR" /* GR */]: new _BbanStructure(
           BbanStructurePart.bankCode(3, 0 /* n */),
           BbanStructurePart.branchCode(4, 0 /* n */),
-          BbanStructurePart.accountNumber(16, 2 /* c */),
+          BbanStructurePart.accountNumber(16, 2 /* c */)
         ),
         ["GT" /* GT */]: new _BbanStructure(
           BbanStructurePart.bankCode(4, 2 /* c */),
           BbanStructurePart.currencyType(2, 0 /* n */),
           BbanStructurePart.accountType(2, 0 /* n */),
-          BbanStructurePart.accountNumber(16, 2 /* c */),
+          BbanStructurePart.accountNumber(16, 2 /* c */)
         ),
         ["HR" /* HR */]: new _BbanStructure(
           BbanStructurePart.bankCode(7, 0 /* n */),
-          BbanStructurePart.accountNumber(10, 0 /* n */),
+          BbanStructurePart.accountNumber(10, 0 /* n */)
         ),
         // Provisional
         ["HN" /* HN */]: new _BbanStructure(
           BbanStructurePart.bankCode(4, 1 /* a */),
-          BbanStructurePart.accountNumber(20, 0 /* n */),
+          BbanStructurePart.accountNumber(20, 0 /* n */)
         ),
         // Spec says account number is 1!n15!n
         // no information on 1!n exists -- most likely a bank/branch check digit
@@ -1018,83 +1005,83 @@ var IBANKIT = (() => {
           BbanStructurePart.branchCode(4, 0 /* n */),
           BbanStructurePart.branchCheckDigit(1, 0 /* n */),
           BbanStructurePart.accountNumber(15, 0 /* n */),
-          BbanStructurePart.nationalCheckDigit(1, 0 /* n */),
+          BbanStructurePart.nationalCheckDigit(1, 0 /* n */)
         ),
         ["IE" /* IE */]: new _BbanStructure(
           BbanStructurePart.bankCode(4, 1 /* a */),
           BbanStructurePart.branchCode(6, 0 /* n */),
-          BbanStructurePart.accountNumber(8, 0 /* n */),
+          BbanStructurePart.accountNumber(8, 0 /* n */)
         ),
         ["IL" /* IL */]: new _BbanStructure(
           BbanStructurePart.bankCode(3, 0 /* n */),
           BbanStructurePart.branchCode(3, 0 /* n */),
-          BbanStructurePart.accountNumber(13, 0 /* n */),
+          BbanStructurePart.accountNumber(13, 0 /* n */)
         ),
         ["IQ" /* IQ */]: new _BbanStructure(
           BbanStructurePart.bankCode(4, 1 /* a */),
           BbanStructurePart.branchCode(3, 0 /* n */),
-          BbanStructurePart.accountNumber(12, 0 /* n */),
+          BbanStructurePart.accountNumber(12, 0 /* n */)
         ),
         // Provisional
         ["IR" /* IR */]: new _BbanStructure(
           BbanStructurePart.bankCode(3, 0 /* n */),
-          BbanStructurePart.accountNumber(19, 0 /* n */),
+          BbanStructurePart.accountNumber(19, 0 /* n */)
         ),
         ["IS" /* IS */]: new _BbanStructure(
           BbanStructurePart.bankCode(4, 0 /* n */),
           BbanStructurePart.branchCode(2, 0 /* n */),
           BbanStructurePart.accountNumber(6, 0 /* n */),
-          BbanStructurePart.identificationNumber(10, 0 /* n */),
+          BbanStructurePart.identificationNumber(10, 0 /* n */)
         ),
         ["IT" /* IT */]: new _BbanStructure(
           BbanStructurePart.nationalCheckDigit(1, 1 /* a */, nationalIT),
           BbanStructurePart.bankCode(5, 0 /* n */),
           BbanStructurePart.branchCode(5, 0 /* n */),
-          BbanStructurePart.accountNumber(12, 2 /* c */),
+          BbanStructurePart.accountNumber(12, 2 /* c */)
         ),
         ["JO" /* JO */]: new _BbanStructure(
           BbanStructurePart.bankCode(4, 1 /* a */),
           BbanStructurePart.branchCode(4, 0 /* n */),
-          BbanStructurePart.accountNumber(18, 2 /* c */),
+          BbanStructurePart.accountNumber(18, 2 /* c */)
         ),
         // Provisional
         ["KM" /* KM */]: new _BbanStructure(BbanStructurePart.accountNumber(23, 0 /* n */)),
         ["KW" /* KW */]: new _BbanStructure(
           BbanStructurePart.bankCode(4, 1 /* a */),
-          BbanStructurePart.accountNumber(22, 2 /* c */),
+          BbanStructurePart.accountNumber(22, 2 /* c */)
         ),
         ["KZ" /* KZ */]: new _BbanStructure(
           BbanStructurePart.bankCode(3, 0 /* n */),
-          BbanStructurePart.accountNumber(13, 2 /* c */),
+          BbanStructurePart.accountNumber(13, 2 /* c */)
         ),
         ["LB" /* LB */]: new _BbanStructure(
           BbanStructurePart.bankCode(4, 0 /* n */),
-          BbanStructurePart.accountNumber(20, 2 /* c */),
+          BbanStructurePart.accountNumber(20, 2 /* c */)
         ),
         ["LC" /* LC */]: new _BbanStructure(
           BbanStructurePart.bankCode(4, 1 /* a */),
-          BbanStructurePart.accountNumber(24, 0 /* n */),
+          BbanStructurePart.accountNumber(24, 0 /* n */)
         ),
         ["LI" /* LI */]: new _BbanStructure(
           BbanStructurePart.bankCode(5, 0 /* n */),
-          BbanStructurePart.accountNumber(12, 2 /* c */),
+          BbanStructurePart.accountNumber(12, 2 /* c */)
         ),
         ["LT" /* LT */]: new _BbanStructure(
           BbanStructurePart.bankCode(5, 0 /* n */),
-          BbanStructurePart.accountNumber(11, 0 /* n */),
+          BbanStructurePart.accountNumber(11, 0 /* n */)
         ),
         ["LU" /* LU */]: new _BbanStructure(
           BbanStructurePart.bankCode(3, 0 /* n */),
-          BbanStructurePart.accountNumber(13, 2 /* c */),
+          BbanStructurePart.accountNumber(13, 2 /* c */)
         ),
         ["LV" /* LV */]: new _BbanStructure(
           BbanStructurePart.bankCode(4, 1 /* a */),
-          BbanStructurePart.accountNumber(13, 2 /* c */),
+          BbanStructurePart.accountNumber(13, 2 /* c */)
         ),
         ["LY" /* LY */]: new _BbanStructure(
           BbanStructurePart.bankCode(3, 0 /* n */),
           BbanStructurePart.branchCode(3, 0 /* n */),
-          BbanStructurePart.accountNumber(15, 0 /* n */),
+          BbanStructurePart.accountNumber(15, 0 /* n */)
         ),
         // Provisional
         ["MA" /* MA */]: new _BbanStructure(BbanStructurePart.accountNumber(24, 0 /* n */)),
@@ -1102,16 +1089,16 @@ var IBANKIT = (() => {
           BbanStructurePart.bankCode(5, 0 /* n */),
           BbanStructurePart.branchCode(5, 0 /* n */),
           BbanStructurePart.accountNumber(11, 2 /* c */),
-          BbanStructurePart.nationalCheckDigit(2, 0 /* n */, nationalFR),
+          BbanStructurePart.nationalCheckDigit(2, 0 /* n */, nationalFR)
         ),
         ["MD" /* MD */]: new _BbanStructure(
           BbanStructurePart.bankCode(2, 2 /* c */),
-          BbanStructurePart.accountNumber(18, 2 /* c */),
+          BbanStructurePart.accountNumber(18, 2 /* c */)
         ),
         ["ME" /* ME */]: new _BbanStructure(
           BbanStructurePart.bankCode(3, 0 /* n */),
           BbanStructurePart.accountNumber(13, 0 /* n */),
-          BbanStructurePart.nationalCheckDigit(2, 0 /* n */),
+          BbanStructurePart.nationalCheckDigit(2, 0 /* n */)
           // @TODO checkdigit
         ),
         // Provisional
@@ -1119,35 +1106,35 @@ var IBANKIT = (() => {
           BbanStructurePart.bankCode(5, 0 /* n */),
           BbanStructurePart.branchCode(5, 0 /* n */),
           BbanStructurePart.accountNumber(11, 2 /* c */),
-          BbanStructurePart.nationalCheckDigit(2, 0 /* n */),
+          BbanStructurePart.nationalCheckDigit(2, 0 /* n */)
         ),
         ["MK" /* MK */]: new _BbanStructure(
           BbanStructurePart.bankCode(3, 0 /* n */),
           BbanStructurePart.accountNumber(10, 2 /* c */),
-          BbanStructurePart.nationalCheckDigit(2, 0 /* n */),
+          BbanStructurePart.nationalCheckDigit(2, 0 /* n */)
           // @TODO checkdigit
         ),
         // Provisional
         ["ML" /* ML */]: new _BbanStructure(
           BbanStructurePart.bankCode(1, 1 /* a */),
-          BbanStructurePart.accountNumber(25, 0 /* n */),
+          BbanStructurePart.accountNumber(25, 0 /* n */)
         ),
         ["MN" /* MN */]: new _BbanStructure(
           // MN2!n4!n12!n
           //   Added April 2023
           BbanStructurePart.bankCode(4, 0 /* n */),
-          BbanStructurePart.accountNumber(12, 0 /* n */),
+          BbanStructurePart.accountNumber(12, 0 /* n */)
         ),
         ["MR" /* MR */]: new _BbanStructure(
           BbanStructurePart.bankCode(5, 0 /* n */),
           BbanStructurePart.branchCode(5, 0 /* n */),
           BbanStructurePart.accountNumber(11, 0 /* n */),
-          BbanStructurePart.nationalCheckDigit(2, 0 /* n */),
+          BbanStructurePart.nationalCheckDigit(2, 0 /* n */)
         ),
         ["MT" /* MT */]: new _BbanStructure(
           BbanStructurePart.bankCode(4, 1 /* a */),
           BbanStructurePart.branchCode(5, 0 /* n */),
-          BbanStructurePart.accountNumber(18, 2 /* c */),
+          BbanStructurePart.accountNumber(18, 2 /* c */)
         ),
         // Spec: 4!a2!n2!n12!n3!n3!a
         //  No docs on the last 3!n -- assuming account type
@@ -1158,178 +1145,178 @@ var IBANKIT = (() => {
           BbanStructurePart.branchCode(2, 0 /* n */),
           BbanStructurePart.accountNumber(12, 2 /* c */),
           BbanStructurePart.accountType(3, 0 /* n */),
-          BbanStructurePart.currencyType(3, 1 /* a */),
+          BbanStructurePart.currencyType(3, 1 /* a */)
         ),
         // Provisional
         ["MZ" /* MZ */]: new _BbanStructure(BbanStructurePart.accountNumber(21, 0 /* n */)),
         // Provisional
         ["NE" /* NE */]: new _BbanStructure(
           BbanStructurePart.bankCode(2, 1 /* a */),
-          BbanStructurePart.accountNumber(22, 0 /* n */),
+          BbanStructurePart.accountNumber(22, 0 /* n */)
         ),
         ["NI" /* NI */]: new _BbanStructure(
           // NI2!n4!a20!n
           //   Added April 2023
           BbanStructurePart.bankCode(4, 1 /* a */),
-          BbanStructurePart.accountNumber(20, 0 /* n */),
+          BbanStructurePart.accountNumber(20, 0 /* n */)
         ),
         ["NL" /* NL */]: new _BbanStructure(
           BbanStructurePart.bankCode(4, 1 /* a */),
-          BbanStructurePart.accountNumber(10, 0 /* n */),
+          BbanStructurePart.accountNumber(10, 0 /* n */)
         ),
         ["NO" /* NO */]: new _BbanStructure(
           BbanStructurePart.bankCode(4, 0 /* n */),
           BbanStructurePart.accountNumber(6, 0 /* n */),
-          BbanStructurePart.nationalCheckDigit(1, 0 /* n */, nationalNO),
+          BbanStructurePart.nationalCheckDigit(1, 0 /* n */, nationalNO)
         ),
         ["PK" /* PK */]: new _BbanStructure(
           BbanStructurePart.bankCode(4, 2 /* c */),
-          BbanStructurePart.accountNumber(16, 2 /* c */),
+          BbanStructurePart.accountNumber(16, 2 /* c */)
         ),
         // 8!n16!n
         ["PL" /* PL */]: new _BbanStructure(
           BbanStructurePart.bankCode(3, 0 /* n */),
           BbanStructurePart.branchCode(4, 0 /* n */),
           BbanStructurePart.nationalCheckDigit(1, 0 /* n */),
-          BbanStructurePart.accountNumber(16, 0 /* n */),
+          BbanStructurePart.accountNumber(16, 0 /* n */)
         ),
         ["PS" /* PS */]: new _BbanStructure(
           BbanStructurePart.bankCode(4, 1 /* a */),
-          BbanStructurePart.accountNumber(21, 2 /* c */),
+          BbanStructurePart.accountNumber(21, 2 /* c */)
         ),
         ["PT" /* PT */]: new _BbanStructure(
           BbanStructurePart.bankCode(4, 0 /* n */),
           BbanStructurePart.branchCode(4, 0 /* n */),
           BbanStructurePart.accountNumber(11, 0 /* n */),
-          BbanStructurePart.nationalCheckDigit(2, 0 /* n */, nationalPT),
+          BbanStructurePart.nationalCheckDigit(2, 0 /* n */, nationalPT)
         ),
         ["QA" /* QA */]: new _BbanStructure(
           BbanStructurePart.bankCode(4, 1 /* a */),
-          BbanStructurePart.accountNumber(21, 2 /* c */),
+          BbanStructurePart.accountNumber(21, 2 /* c */)
         ),
         ["RO" /* RO */]: new _BbanStructure(
           BbanStructurePart.bankCode(4, 1 /* a */),
-          BbanStructurePart.accountNumber(16, 2 /* c */),
+          BbanStructurePart.accountNumber(16, 2 /* c */)
         ),
         ["RS" /* RS */]: new _BbanStructure(
           BbanStructurePart.bankCode(3, 0 /* n */),
           BbanStructurePart.accountNumber(13, 0 /* n */),
-          BbanStructurePart.nationalCheckDigit(2, 0 /* n */),
+          BbanStructurePart.nationalCheckDigit(2, 0 /* n */)
         ),
         ["RU" /* RU */]: new _BbanStructure(
           // RU2!n9!n5!n15!c
           //   Added May 2022
           BbanStructurePart.bankCode(9, 0 /* n */),
           BbanStructurePart.branchCode(5, 0 /* n */),
-          BbanStructurePart.accountNumber(15, 2 /* c */),
+          BbanStructurePart.accountNumber(15, 2 /* c */)
         ),
         ["SA" /* SA */]: new _BbanStructure(
           BbanStructurePart.bankCode(2, 0 /* n */),
-          BbanStructurePart.accountNumber(18, 2 /* c */),
+          BbanStructurePart.accountNumber(18, 2 /* c */)
         ),
         ["SC" /* SC */]: new _BbanStructure(
           BbanStructurePart.bankCode(4, 1 /* a */),
           BbanStructurePart.branchCode(2, 0 /* n */),
           BbanStructurePart.branchCheckDigit(2, 0 /* n */),
           BbanStructurePart.accountNumber(16, 0 /* n */),
-          BbanStructurePart.currencyType(3, 1 /* a */),
+          BbanStructurePart.currencyType(3, 1 /* a */)
         ),
         ["SD" /* SD */]: new _BbanStructure(
           // SD2!n2!n12!n
           //  Added October 2021
           BbanStructurePart.bankCode(2, 0 /* n */),
-          BbanStructurePart.accountNumber(12, 0 /* n */),
+          BbanStructurePart.accountNumber(12, 0 /* n */)
         ),
         ["SE" /* SE */]: new _BbanStructure(
           BbanStructurePart.bankCode(3, 0 /* n */),
           BbanStructurePart.accountNumber(16, 0 /* n */),
-          BbanStructurePart.nationalCheckDigit(1, 0 /* n */),
+          BbanStructurePart.nationalCheckDigit(1, 0 /* n */)
         ),
         ["SI" /* SI */]: new _BbanStructure(
           BbanStructurePart.bankCode(2, 0 /* n */),
           BbanStructurePart.branchCode(3, 0 /* n */),
           BbanStructurePart.accountNumber(8, 0 /* n */),
-          BbanStructurePart.nationalCheckDigit(2, 0 /* n */),
+          BbanStructurePart.nationalCheckDigit(2, 0 /* n */)
         ),
         ["SK" /* SK */]: new _BbanStructure(
           BbanStructurePart.bankCode(4, 0 /* n */),
-          BbanStructurePart.accountNumber(16, 0 /* n */),
+          BbanStructurePart.accountNumber(16, 0 /* n */)
         ),
         ["SM" /* SM */]: new _BbanStructure(
           BbanStructurePart.nationalCheckDigit(1, 1 /* a */, nationalIT),
           BbanStructurePart.bankCode(5, 0 /* n */),
           BbanStructurePart.branchCode(5, 0 /* n */),
-          BbanStructurePart.accountNumber(12, 2 /* c */),
+          BbanStructurePart.accountNumber(12, 2 /* c */)
         ),
         // Provisional
         ["SN" /* SN */]: new _BbanStructure(
           BbanStructurePart.bankCode(5, 2 /* c */),
           BbanStructurePart.branchCode(5, 0 /* n */),
-          BbanStructurePart.accountNumber(14, 0 /* n */),
+          BbanStructurePart.accountNumber(14, 0 /* n */)
         ),
         ["SO" /* SO */]: new _BbanStructure(
           // SO2!n4!n3!n12!n
           //   Added Feb 2023
           BbanStructurePart.bankCode(4, 0 /* n */),
           BbanStructurePart.branchCode(3, 0 /* n */),
-          BbanStructurePart.accountNumber(12, 0 /* n */),
+          BbanStructurePart.accountNumber(12, 0 /* n */)
         ),
         ["ST" /* ST */]: new _BbanStructure(
           BbanStructurePart.bankCode(4, 0 /* n */),
           BbanStructurePart.branchCode(4, 0 /* n */),
-          BbanStructurePart.accountNumber(13, 0 /* n */),
+          BbanStructurePart.accountNumber(13, 0 /* n */)
         ),
         ["SV" /* SV */]: new _BbanStructure(
           // SV2!n4!a20!n
           //  Added March 2021
           BbanStructurePart.bankCode(4, 1 /* a */),
           BbanStructurePart.branchCode(4, 0 /* n */),
-          BbanStructurePart.accountNumber(16, 0 /* n */),
+          BbanStructurePart.accountNumber(16, 0 /* n */)
         ),
         // Provisional
         ["TG" /* TG */]: new _BbanStructure(
           BbanStructurePart.bankCode(2, 1 /* a */),
-          BbanStructurePart.accountNumber(22, 0 /* n */),
+          BbanStructurePart.accountNumber(22, 0 /* n */)
         ),
         // Provisional
         ["TD" /* TD */]: new _BbanStructure(
-          BbanStructurePart.accountNumber(23, 0 /* n */),
+          BbanStructurePart.accountNumber(23, 0 /* n */)
           // @TODO is this france?
         ),
         ["TL" /* TL */]: new _BbanStructure(
           BbanStructurePart.bankCode(3, 0 /* n */),
           BbanStructurePart.accountNumber(14, 0 /* n */),
-          BbanStructurePart.nationalCheckDigit(2, 0 /* n */),
+          BbanStructurePart.nationalCheckDigit(2, 0 /* n */)
         ),
         ["TN" /* TN */]: new _BbanStructure(
           BbanStructurePart.bankCode(2, 0 /* n */),
           BbanStructurePart.branchCode(3, 0 /* n */),
           BbanStructurePart.accountNumber(13, 2 /* c */),
-          BbanStructurePart.nationalCheckDigit(2, 2 /* c */),
+          BbanStructurePart.nationalCheckDigit(2, 2 /* c */)
         ),
         ["TR" /* TR */]: new _BbanStructure(
           BbanStructurePart.bankCode(5, 0 /* n */),
           BbanStructurePart.nationalCheckDigit(1, 2 /* c */),
-          BbanStructurePart.accountNumber(16, 2 /* c */),
+          BbanStructurePart.accountNumber(16, 2 /* c */)
         ),
         ["UA" /* UA */]: new _BbanStructure(
           BbanStructurePart.bankCode(6, 0 /* n */),
-          BbanStructurePart.accountNumber(19, 0 /* n */),
+          BbanStructurePart.accountNumber(19, 0 /* n */)
         ),
         ["VA" /* VA */]: new _BbanStructure(
           BbanStructurePart.bankCode(3, 2 /* c */),
-          BbanStructurePart.accountNumber(15, 0 /* n */),
+          BbanStructurePart.accountNumber(15, 0 /* n */)
         ),
         ["VG" /* VG */]: new _BbanStructure(
           BbanStructurePart.bankCode(4, 1 /* a */),
-          BbanStructurePart.accountNumber(16, 0 /* n */),
+          BbanStructurePart.accountNumber(16, 0 /* n */)
         ),
         ["XK" /* XK */]: new _BbanStructure(
           BbanStructurePart.bankCode(2, 0 /* n */),
           BbanStructurePart.branchCode(2, 0 /* n */),
           BbanStructurePart.accountNumber(10, 0 /* n */),
-          BbanStructurePart.nationalCheckDigit(2, 0 /* n */),
-        ),
+          BbanStructurePart.nationalCheckDigit(2, 0 /* n */)
+        )
       };
     }
     constructor(...entries) {
@@ -1397,7 +1384,7 @@ var IBANKIT = (() => {
           14 /* BBAN_LENGTH */,
           `[${bban}] length is ${bbanLength}, expected BBAN length is: ${expectedBbanLength}`,
           String(bbanLength),
-          String(expectedBbanLength),
+          String(expectedBbanLength)
         );
       }
     }
@@ -1417,19 +1404,19 @@ var IBANKIT = (() => {
             throw new FormatException(
               15 /* BBAN_ONLY_UPPER_CASE_LETTERS */,
               `[${entryValue}] must contain only upper case letters.`,
-              entryValue,
+              entryValue
             );
           case 2 /* c */:
             throw new FormatException(
               16 /* BBAN_ONLY_DIGITS_OR_LETTERS */,
               `[${entryValue}] must contain only digits or letters.`,
-              entryValue,
+              entryValue
             );
           case 0 /* n */:
             throw new FormatException(
               17 /* BBAN_ONLY_DIGITS */,
               `[${entryValue}] must contain only digits.`,
-              entryValue,
+              entryValue
             );
         }
       }
@@ -1440,7 +1427,7 @@ var IBANKIT = (() => {
             11 /* NATIONAL_CHECK_DIGIT */,
             `national check digit(s) don't match expect=[${expected}] actual=[${entryValue}]`,
             expected,
-            entryValue,
+            entryValue
           );
         }
       }
@@ -1544,7 +1531,7 @@ var IBANKIT = (() => {
       throw new InvalidCheckDigitException(
         `[${iban}] has invalid check digit: ${checkDigit}, expected check digit is: ${expectedCheckDigit}`,
         checkDigit,
-        expectedCheckDigit,
+        expectedCheckDigit
       );
     }
   }
@@ -1565,12 +1552,16 @@ var IBANKIT = (() => {
       throw new FormatException(
         9 /* COUNTRY_CODE_ONLY_UPPER_CASE_LETTERS */,
         "Iban country code must contain upper case letters.",
-        countryCode,
+        countryCode
       );
     }
     const country = countryByCode(countryCode);
     if (country == null) {
-      throw new FormatException(10 /* COUNTRY_CODE_EXISTS */, "Iban contains non existing country code.", countryCode);
+      throw new FormatException(
+        10 /* COUNTRY_CODE_EXISTS */,
+        "Iban contains non existing country code.",
+        countryCode
+      );
     }
     if (hasStructure) {
       const structure = BbanStructure.forCountry(country);
@@ -1584,7 +1575,7 @@ var IBANKIT = (() => {
       throw new FormatException(
         12 /* CHECK_DIGIT_TWO_DIGITS */,
         "Iban must contain 2 digit check digit.",
-        iban.substring(COUNTRY_CODE_LENGTH),
+        iban.substring(COUNTRY_CODE_LENGTH)
       );
     }
     const checkDigit = getCheckDigit(iban);
@@ -1592,7 +1583,7 @@ var IBANKIT = (() => {
       throw new FormatException(
         13 /* CHECK_DIGIT_ONLY_DIGITS */,
         "Iban's check digit should contain only digits.",
-        checkDigit,
+        checkDigit
       );
     }
   }
@@ -1606,19 +1597,16 @@ var IBANKIT = (() => {
       const newTotal = (value > 9 ? total2 * 100 : total2 * 10) + value;
       return newTotal > MAX ? newTotal % MOD : newTotal;
     }
-    const total = reformattedIban
-      .toUpperCase()
-      .split("")
-      .reduce((totalValue, ch) => {
-        const code = ch.charCodeAt(0);
-        if (VA <= code && code <= VZ) {
-          return addSum(totalValue, code - VA + 10);
-        } else if (V0 <= code && code <= V9) {
-          return addSum(totalValue, code - V0);
-        } else {
-          throw new FormatException(18 /* IBAN_VALID_CHARACTERS */, `Invalid Character[${ch}] = '${code}'`, ch);
-        }
-      }, 0);
+    const total = reformattedIban.toUpperCase().split("").reduce((totalValue, ch) => {
+      const code = ch.charCodeAt(0);
+      if (VA <= code && code <= VZ) {
+        return addSum(totalValue, code - VA + 10);
+      } else if (V0 <= code && code <= V9) {
+        return addSum(totalValue, code - V0);
+      } else {
+        throw new FormatException(18 /* IBAN_VALID_CHARACTERS */, `Invalid Character[${ch}] = '${code}'`, ch);
+      }
+    }, 0);
     return total % MOD;
   }
   function getBbanStructure(iban) {
@@ -1902,7 +1890,7 @@ var IBANKIT = (() => {
   };
 
   // src/iban.ts
-  var NON_ALPHANUM = /[^a-z0-9]/gi;
+  var NON_ALPHANUM = /[^a-z0-9]/ig;
   var samples = {
     AD: "AD1200012030200359100100",
     AE: "AE070331234567890123456",
@@ -2005,7 +1993,7 @@ var IBANKIT = (() => {
     MA: "MA64011519000001205000534921",
     NI: "NI92BAMC000000000000000003123123",
     NE: "NE58NE0380100100130305000268",
-    TG: "TG53TG0090604310346500400070",
+    TG: "TG53TG0090604310346500400070"
   };
   var IBAN = class _IBAN {
     /**
@@ -2270,7 +2258,10 @@ var IBANKIT = (() => {
   }
   function validateLength(bic) {
     if (bic.length !== BIC8_LENGTH && bic.length !== BIC11_LENGTH) {
-      throw new FormatException(3 /* BIC_LENGTH_8_OR_11 */, `Bic length must be ${BIC8_LENGTH} or ${BIC11_LENGTH}`);
+      throw new FormatException(
+        3 /* BIC_LENGTH_8_OR_11 */,
+        `Bic length must be ${BIC8_LENGTH} or ${BIC11_LENGTH}`
+      );
     }
   }
   function validateCase(bic) {
@@ -2281,24 +2272,16 @@ var IBANKIT = (() => {
   function validateBankCode(bic) {
     const bankCode = getBankCode2(bic);
     if (!ucnumRegex.test(bankCode)) {
-      throw new FormatException(
-        7 /* BANK_CODE_ONLY_LETTERS */,
-        "Bank code must contain only letters or digits.",
-        bankCode,
-      );
+      throw new FormatException(7 /* BANK_CODE_ONLY_LETTERS */, "Bank code must contain only letters or digits.", bankCode);
     }
   }
   function validateCountryCode2(bic) {
     const countryCode = getCountryCode2(bic).trim();
-    if (
-      countryCode.length < COUNTRY_CODE_LENGTH2 ||
-      countryCode !== countryCode.toUpperCase() ||
-      !ucRegex2.test(countryCode)
-    ) {
+    if (countryCode.length < COUNTRY_CODE_LENGTH2 || countryCode !== countryCode.toUpperCase() || !ucRegex2.test(countryCode)) {
       throw new FormatException(
         9 /* COUNTRY_CODE_ONLY_UPPER_CASE_LETTERS */,
         "Bic country code must contain upper case letters",
-        countryCode,
+        countryCode
       );
     }
     if (countryByCode(countryCode) == null) {
@@ -2311,7 +2294,7 @@ var IBANKIT = (() => {
       throw new FormatException(
         6 /* LOCATION_CODE_ONLY_LETTERS_OR_DIGITS */,
         "Location code must contain only letters or digits.",
-        locationCode,
+        locationCode
       );
     }
   }
@@ -2321,7 +2304,7 @@ var IBANKIT = (() => {
       throw new FormatException(
         5 /* BRANCH_CODE_ONLY_LETTERS_OR_DIGITS */,
         "Branch code must contain only letters or digits.",
-        branchCode,
+        branchCode
       );
     }
   }
