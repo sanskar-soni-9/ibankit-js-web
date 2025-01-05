@@ -41,7 +41,7 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "lint": "eslint --ext .js,.jsx,.ts,.tsx src",
     "test": "jest",
-    "build": "tsc",
+    "build": "esbuild src/index.ts --bundle --outdir=dist --global-name=IBANKIT",
     "prepublishOnly:esm": "tsc -p tsconfig.json",
     "prepublishOnly:cjs": "tsc -p tsconfig-cjs.json",
     "prepublishOnly": "npm run prepublishOnly:esm && npm run prepublishOnly:cjs"
@@ -74,6 +74,7 @@
     "@types/jest": "^29.5.4",
     "@typescript-eslint/eslint-plugin": "^6.5.0",
     "@typescript-eslint/parser": "^6.5.0",
+    "esbuild": "^0.24.2",
     "eslint": "^8.48.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-airbnb-typescript": "^17.1.0",

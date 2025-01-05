@@ -11,7 +11,6 @@ jsonconfig.json
 test.log
 server.log
 install.log
-dist
 env
 mochawesome-reports/
 tmp/*
